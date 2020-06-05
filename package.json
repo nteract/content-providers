@@ -1,0 +1,30 @@
+{
+  "name": "content-provider",
+  "version": "1.0.0",
+  "description": "A collection of content providers for accessing notebooks in different storage locations",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest --silent",
+    "test:verbose": "jest --verbose",
+    "test:unit": "npm run test",
+    "test:coverage": "npm run test -- --coverage",
+    "test:lint": "npm run lint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nteract/content-providers.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nteract/content-providers/issues"
+  },
+  "homepage": "https://github.com/nteract/content-providers#readme",
+  "devDependencies": {
+    "jest": "^26.0.1",
+    "tslint": "^5.12.1",
+    "typescript": "^3.7.3"
+  }
+}
