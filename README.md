@@ -1,8 +1,8 @@
 ## Installation
-Install the package from your app root directory
-with `npm`
-```
-npm install 
+Installation
+To use google cloud storage, you can use the @nteract/google-content-provider package.
+
+$ npm install --save @nteract/google-content-provider
 ```
 ## <a name="create-bucket"></a> Create your Bucket on Google Cloud Storage
 The bucket should be created with **fine grained** access control, as the plugin will configure uploaded files with public read access.
@@ -32,19 +32,13 @@ You will find below many examples of configurations, for each example :
 6. Save the configuration file
 
 **Example with environment variable**
-`./config.json`
-```json
-{
-  "provider": "google-cloud-storage",
-  "providerOptions": {
-    "serviceAccount": "${process.env.GOOGLE_SERVICE_ACCOUNT || <Your serviceAccount JSON object/string here>}",
-    "bucketName": "${process.env.GOOGLE_BUCKET_NAME || Bucket-name}",
-    "baseUrl": "${process.env.GOOGLE_BASE_URL || https://storage.googleapis.com/{bucket-name}}",
-    "basePath": "",
-    "filePathLocal":"C:/Users/../Desktop/example.ipynb",
-    "publicFiles": true
-  }
-}
+`./config.ts`
+export const serviceAccount = <Your serviceAccount JSON object/string here>
+export const  bucketName = "Bucket-name"
+export const  baseUrl = "https://storage.googleapis.com/{bucket-name}"
+export const  basePath = "",
+export const  filePathLocal ="C:/Users/../Desktop/example.ipynb"
+  
 ## How to configure variable ?
 #### `serviceAccount` :
 JSON data provide by Google Account (explained before).
@@ -64,3 +58,11 @@ Define base path to get each media document.
 #### `publicFiles`:
 Boolean atribute to define public attribute to file when it is upload to storage.
 
+## Documentation
+Please fine attached readme files
+
+## Support
+If you experience an issue while using this package or have a feature request, please file an issue on the issue board.
+
+## License
+BSD-3-Clause

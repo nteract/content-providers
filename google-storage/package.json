@@ -1,5 +1,5 @@
 {
-  "name": "content-provider",
+  "name": "@nteract/google-content-provider",
   "version": "1.0.0",
   "description": "A collection of content providers for accessing notebooks in different storage locations",
   "main": "index.js",

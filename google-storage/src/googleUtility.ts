@@ -1,15 +1,13 @@
-import config from '../config.json';
-
-const serviceAccount = config.providerOptions.serviceAccount;
-const bucketName = config.providerOptions.bucketName;
-const baseUrl = config.providerOptions.baseUrl;
+/**	 import service account details, bucketname, filename and other details from your configuration file
+import {serviceAccount,baseUrl,bucketName,fileName,filePathLocal,basePath} from '../'; 
+*/
  /**
    * Check validity of Service Account configuration
    * @param config
    * @returns {{private_key}|{client_email}|{project_id}|any}
    */
 
- const checkServiceAccount = (config :any) => {
+ const checkServiceAccount = () => {
     if (!serviceAccount) {
       throw new Error('"Service Account JSON" is required!');
     }
@@ -18,7 +16,8 @@ const baseUrl = config.providerOptions.baseUrl;
     }
     if (!baseUrl) {
       /** Set to default **/
-      config.providerOptions.baseUrl = 'https://storage.googleapis.com/{bucket-name}';
+      throw new Error('Please set https://storage.googleapis.com/{bucket-name} as baseUrl');
+      ;
     }
    
     let serviceAccountjson;
