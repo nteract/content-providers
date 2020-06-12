@@ -32,7 +32,8 @@
     "babel-jest": "^26.0.1",
     "jest": "^26.0.1",
     "ts-jest": "^26.1.0",
-    "tslint": "^5.12.1"
+    "tslint": "^5.12.1",
+    "typescript": "^3.8.3"
   },
   "dependencies": {
     "express": "4.16.2"
