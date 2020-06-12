@@ -1,9 +1,12 @@
+#@nteract/google-content-provider
 ## Installation
 Installation
 To use google cloud storage, you can use the @nteract/google-content-provider package.
-
-$ npm install --save @nteract/google-content-provider
 ```
+$ npm install --save @nteract/google-content-provider
+
+```
+## Usage
 ## <a name="create-bucket"></a> Create your Bucket on Google Cloud Storage
 The bucket should be created with **fine grained** access control, as the plugin will configure uploaded files with public read access.
 ### How to create a bucket ?
