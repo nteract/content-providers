@@ -1,9 +1,9 @@
 import * as Storage from '@google-cloud/storage'
 import googleUtility from './googleUtility'
 import { Observable} from "rxjs";
-/**import service account details, bucketname, filename and other details from your configuration file
-Example: import {serviceAccount,bucketName,fileName,filePathLocal} from '..src/configuration'; 
-*/
+//import service account details, bucketname, filename and other details from your configuration file
+import {serviceAccount,bucketName,fileName,filePathLocal} from '../config'; 
+
 // check if service account exists with correct format
 googleUtility.checkServiceAccount();
 
@@ -21,13 +21,13 @@ Get metadata of the file from the bucket
 * @param fileName
 * @returns {Promise<void>}
 */
-function get(storage: any, bucketName: string, fileName: string) : Observable<[Storage.GetFileResponse]> {
-const myBucket = storage.bucket(bucketName);
-const file = myBucket.file(fileName);
+export function get(storage: any, bucketName: string, fileName: string) : Observable<[Storage.GetFileResponse]> {
+const bucket = storage.bucket(bucketName);
+const file = bucket.file(fileName);
 var apiResponse : any;
 file.get().then(function(data : any) {
   const file = data[0];
-  apiResponse = data[1];
+  apiResponse = data[0];
 });
 return apiResponse;
 }
@@ -36,7 +36,7 @@ return apiResponse;
  * @param storage
  * @param bucketName
  */
-function update(storage: any, bucketName: string, fileName: string) : Observable<[any]>  {
+export function update(storage: any, bucketName: string, fileName: string) : Observable<[any]>  {
 	 throw new Error("Not supported by Google API");
 }
 /**
@@ -45,7 +45,7 @@ Uploads the file to the bucket
 * @param bucketName
 * @param filePathLocal
 */
-function create(storage: any, bucketName: string, filePathLocal: string)  : Observable<[Storage.UploadResponse]> {
+export function create(storage: any, bucketName: string, filePathLocal: string)  : Observable<[Storage.UploadResponse]> {
   // Uploads a local file to the bucket
   var apiResponse : any;
 	storage.bucket(bucketName).upload(filePathLocal, {
@@ -67,7 +67,7 @@ function create(storage: any, bucketName: string, filePathLocal: string)  : Obse
 	* @param bucketName
 	* @param fileName
 	*/
-function save(storage: any, bucketName: string, fileName: string) : Observable<[Storage.SaveCallback]> {
+export function save(storage: any, bucketName: string, fileName: string) : Observable<[Storage.SaveCallback]> {
 	const file = storage.bucket(bucketName).file(fileName);
 	const contents = 'This is the updated contents of the file.';
 	file.save(contents, function (err: any) {
@@ -86,7 +86,7 @@ Deletes the file from the bucket
 * @param fileName
 * @returns {Promise<void>}
 */
-function remove(storage: any, bucketName: string, fileName: string)  : Observable<[Storage.DeleteFileResponse]>  {
+export function remove(storage: any, bucketName: string, fileName: string)  : Observable<[Storage.DeleteFileResponse]>  {
   var apiResponse : any;
     storage.bucket(bucketName).file(fileName).delete().then(function(data :any) {
     console.log(`gs://${bucketName}/${fileName} deleted.`);
@@ -94,6 +94,7 @@ function remove(storage: any, bucketName: string, fileName: string)  : Observabl
   });
   return apiResponse;
 }
+
 async function listCheckpoints() {
 	throw new Error("Not implemented");
 }
@@ -106,8 +107,9 @@ async function deleteCheckpoint() {
 async function restoreFromCheckpoint() {
 	throw new Error("Not implemented");
 }
+
 export class GoogleProvider {
-  storage: any;
+  storage : any;
   bucketName : string;
   fileName : string;
   filePathLocal : string;
