@@ -1,7 +1,7 @@
 #@nteract/google-content-provider
 ## Installation
 Installation
-To use google cloud storage, you can use the @nteract/google-content-provider package.
+To read and save notebooks to Google Cloud storage in nteract-based apps, you can use the @nteract/google-content-provider package.
 ```
 $ npm install --save @nteract/google-content-provider
 
