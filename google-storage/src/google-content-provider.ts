@@ -1,32 +1,72 @@
 import * as Storage from '@google-cloud/storage'
 import googleUtility from './googleUtility'
-import {
-	Observable
-} from "rxjs";
+import { Observable, of, isObservable } from "rxjs";
+import {from} from 'rxjs';
+import { AjaxResponse } from "rxjs/ajax";
+import { catchError } from "rxjs/operators";
+
+function createSuccessAjaxResponse(apiResponse: any): AjaxResponse {
+    return {
+      originalEvent: {},
+      xhr: {
+		name: apiResponse['name'],
+		filepath: apiResponse['selfLink'],
+		type: "notebook",
+		writable : '',
+		created : apiResponse['timeCreated'],
+		last_modified : apiResponse['updated'],
+		mimetype: "null",
+	//	content: content ? JSON.parse(content) : null,
+		format: "json"
+	},
+      request: {},
+      status: 200,
+      response: apiResponse,
+      responseText: JSON.stringify(apiResponse),
+      responseType: "json"
+    };
+  }
+  function createErrorAjaxResponse(status: number, error: any): AjaxResponse {
+    return {
+      originalEvent: {},
+      xhr: {},
+      request: {},
+      status,
+      response: error,
+      responseText: JSON.stringify(error),
+      responseType: "json"
+    };
+  }
 //import service account details, bucketname, filename and other details from your configuration file
 /**	
 Get metadata of the file from the bucket
 * @param storage
 * @param bucketName
 * @param fileName
-* @returns {Promise<void>}
+* @returns An Observable with the response
 */
-export function get(storage: any, bucketName: string, fileName: string): Observable < [Storage.GetFileResponse] > {
+export function get(storage: any, bucketName: string, fileName: string)  {
 	const bucket = storage.bucket(bucketName);
-	const file = bucket.file(fileName);
-	var apiResponse: any;
-	file.get().then(function (data: any) {
-		const file = data[0];
-		apiResponse = data[0];
-	});
-	return apiResponse;
+	const file = bucket.file(fileName);	 
+
+return from(file.get()).pipe( 
+	(result: Observable<any>) => {
+		console.log(result)
+		return of(createSuccessAjaxResponse(result))
+	},
+	catchError(error => 
+		of(createErrorAjaxResponse(500, error))
+		)
+  );	
 }
+
+
 /**
  * Updates a file.
  * @param storage
  * @param bucketName
  */
-export function update(storage: any, bucketName: string, fileName: string): Observable < [any] > {
+export function update(storage: any, bucketName: string, fileName: string): Observable < AjaxResponse > {
 	throw new Error("Not supported by Google API");
 }
 /**
@@ -35,7 +75,7 @@ Uploads the file to the bucket
 * @param bucketName
 * @param filePathLocal
 */
-export function create(storage: any, bucketName: string, filePathLocal: string): Observable < [Storage.UploadResponse] > {
+export function create(storage: any, bucketName: string, filePathLocal: string): Observable < AjaxResponse > {
 	// Uploads a local file to the bucket
 	var apiResponse: any;
 	storage.bucket(bucketName).upload(filePathLocal, {
@@ -57,7 +97,7 @@ export function create(storage: any, bucketName: string, filePathLocal: string):
 	* @param bucketName
 	* @param fileName
 	*/
-export function save(storage: any, bucketName: string, fileName: string): Observable < [Storage.SaveCallback] > {
+export function save(storage: any, bucketName: string, fileName: string): Observable < AjaxResponse > {
 	const file = storage.bucket(bucketName).file(fileName);
 	const contents = 'This is the updated contents of the file.';
 	file.save(contents, function (err: any) {
@@ -76,7 +116,7 @@ Deletes the file from the bucket
 * @param fileName
 * @returns {Promise<void>}
 */
-export function remove(storage: any, bucketName: string, fileName: string): Observable < [Storage.DeleteFileResponse] > {
+export function remove(storage: any, bucketName: string, fileName: string): Observable < AjaxResponse > {
 	var apiResponse: any;
 	storage.bucket(bucketName).file(fileName).delete().then(function (data: any) {
 		console.log(`gs://${bucketName}/${fileName} deleted.`);
@@ -85,16 +125,16 @@ export function remove(storage: any, bucketName: string, fileName: string): Obse
 	return apiResponse;
 }
 
-async function listCheckpoints() {
+export function listCheckpoints() : Observable <AjaxResponse> {
 	throw new Error("Not implemented");
 }
-async function createCheckpoint() {
+export function createCheckpoint() : Observable <AjaxResponse> {
 	throw new Error("Not implemented");
 }
-async function deleteCheckpoint() {
+export function deleteCheckpoint() : Observable <AjaxResponse> {
 	throw new Error("Not implemented");
 }
-async function restoreFromCheckpoint() {
+export function restoreFromCheckpoint() : Observable <AjaxResponse >{
 	throw new Error("Not implemented");
 }
 
@@ -109,13 +149,14 @@ export class GoogleProvider {
 	constructor(utility : any, bucketName: string, fileName: string, filePathLocal: string) { // Constructor
 		const serviceAccount=utility.checkServiceAccount();
 
-		this.storage = new Storage.Storage({
+		var storage = new Storage.Storage({
 			projectId: serviceAccount.project_id,
 			credentials: {
 				client_email: serviceAccount.client_email,
 				private_key: serviceAccount.private_key,
 			},
 		});		
+		this.storage=storage
 		this.bucketName = bucketName;
 		this.fileName = fileName;
 		this.filePathLocal = filePathLocal;
@@ -148,4 +189,5 @@ export class GoogleProvider {
 	public restoreFromCheckpoint() {
 		return restoreFromCheckpoint();
 	}
+	
 }

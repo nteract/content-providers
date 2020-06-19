@@ -4,7 +4,7 @@
   "description": "A collection of content providers for accessing notebooks in different storage locations",
   "main": "index.js",
   "scripts": {
-    "start": "tsc && node src/google-contetnt-provider.js",
+    "start": "ts-node src/google-content-provider.ts",
     "test": "jest",
     "test:verbose": "jest --verbose",
     "test:unit": "npm run test",
@@ -32,6 +32,7 @@
     "babel-jest": "^26.0.1",
     "jest": "^26.0.1",
     "ts-jest": "^26.1.0",
+    "ts-node": "^8.10.2",
     "tslint": "^5.12.1",
     "typescript": "^3.8.3"
   },
