@@ -3,26 +3,49 @@ import googleUtility from './googleUtility'
 import { Observable, of, isObservable } from "rxjs";
 import {from} from 'rxjs';
 import { AjaxResponse } from "rxjs/ajax";
-import { catchError } from "rxjs/operators";
+import { map, catchError, concatMap } from 'rxjs/operators';
 
-function createSuccessAjaxResponse(apiResponse: any): AjaxResponse {
+type fileType = {
+	_events: object,
+    _eventsCount: 0,
+    _maxListeners: undefined,
+    metadata: {
+      kind: string,
+	  id: string,
+	  selfLink: string,
+	  mediaLink:string,
+	  name: string,
+	  bucket: string,
+	  generation: string,
+	  metageneration: string,
+	  storageClass:string,
+	  size: number,
+	  md5Hash: string,
+	  crc32c: string,
+	  etag: string,
+	  timeCreated: string,
+	  updated: string,
+	  timeStorageClassUpdated: string  
+  }
+}
+function createSuccessAjaxResponse(file: fileType): AjaxResponse {
     return {
       originalEvent: {},
       xhr: {
-		name: apiResponse['name'],
-		filepath: apiResponse['selfLink'],
+		name: file.metadata.name,
+		filepath: file.metadata.selfLink,
 		type: "notebook",
 		writable : '',
-		created : apiResponse['timeCreated'],
-		last_modified : apiResponse['updated'],
+		created : file.metadata.timeCreated,
+		last_modified : file.metadata.updated,
 		mimetype: "null",
-	//	content: content ? JSON.parse(content) : null,
+		content: null,
 		format: "json"
 	},
       request: {},
       status: 200,
-      response: apiResponse,
-      responseText: JSON.stringify(apiResponse),
+      response: file.metadata,
+      responseText: JSON.stringify(file.metadata),
       responseType: "json"
     };
   }
@@ -49,17 +72,16 @@ export function get(storage: any, bucketName: string, fileName: string)  {
 	const bucket = storage.bucket(bucketName);
 	const file = bucket.file(fileName);	 
 
-return from(file.get()).pipe( 
-	(result: Observable<any>) => {
+return from(file.get()).pipe(
+	(result: Observable<fileType>) => {
 		console.log(result)
 		return of(createSuccessAjaxResponse(result))
-	},
+	}),
 	catchError(error => 
 		of(createErrorAjaxResponse(500, error))
 		)
   );	
 }
-
 
 /**
  * Updates a file.
@@ -191,3 +213,15 @@ export class GoogleProvider {
 	}
 	
 }
+
+// const g= new GoogleProvider(googleUtility,"notebook_samples","Text Classification.ipynb","C:/Users/Barshana/Desktop/macros.txt");
+const serviceAccount=googleUtility.checkServiceAccount();
+
+		const storage = new Storage.Storage({
+			projectId: serviceAccount.project_id,
+			credentials: {
+				client_email: serviceAccount.client_email,
+				private_key: serviceAccount.private_key,
+			},
+		});		
+ var res=get(storage,"notebook_samples","Text Classification.ipynb");
