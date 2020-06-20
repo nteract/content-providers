@@ -214,15 +214,3 @@ export class GoogleProvider {
 	}
 	
 }
-
-// const g= new GoogleProvider(googleUtility,"notebook_samples","Text Classification.ipynb","C:/Users/Barshana/Desktop/macros.txt");
-const serviceAccount=googleUtility.checkServiceAccount();
-
-		const storage = new Storage.Storage({
-			projectId: serviceAccount.project_id,
-			credentials: {
-				client_email: serviceAccount.client_email,
-				private_key: serviceAccount.private_key,
-			},
-		});		
- 
