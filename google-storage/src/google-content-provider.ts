@@ -4,6 +4,8 @@ import { Observable, of, isObservable } from "rxjs";
 import {from} from 'rxjs';
 import { AjaxResponse } from "rxjs/ajax";
 import { map, catchError, concatMap } from 'rxjs/operators';
+import { error } from 'console';
+import { types } from '@babel/core';
 
 type fileType = {
 	_events: object,
@@ -39,7 +41,7 @@ function createSuccessAjaxResponse(file: fileType): AjaxResponse {
 		created : file.metadata.timeCreated,
 		last_modified : file.metadata.updated,
 		mimetype: "null",
-		content: null,
+		content:  null,
 		format: "json"
 	},
       request: {},
@@ -68,19 +70,18 @@ Get metadata of the file from the bucket
 * @param fileName
 * @returns An Observable with the response
 */
-export function get(storage: any, bucketName: string, fileName: string)  {
+export function get(storage: any, bucketName: string, fileName: string) : Observable < AjaxResponse > {
 	const bucket = storage.bucket(bucketName);
 	const file = bucket.file(fileName);	 
-
-return from(file.get()).pipe(
-	(result: Observable<fileType>) => {
-		console.log(result)
-		return of(createSuccessAjaxResponse(result))
-	}),
-	catchError(error => 
-		of(createErrorAjaxResponse(500, error))
-		)
-  );	
+	var response : Observable<AjaxResponse> 
+	return (file.get()).then(
+	(result: any) => {
+		var response = of(createSuccessAjaxResponse(result[0]))
+		console.log(isObservable(response))
+		return response
+	},
+	catchError(error => of(createErrorAjaxResponse(404, error)))
+	)
 }
 
 /**
@@ -224,4 +225,4 @@ const serviceAccount=googleUtility.checkServiceAccount();
 				private_key: serviceAccount.private_key,
 			},
 		});		
- var res=get(storage,"notebook_samples","Text Classification.ipynb");
+ 
