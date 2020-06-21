@@ -3,51 +3,26 @@ import googleUtility from './googleUtility'
 import { Observable, of, isObservable } from "rxjs";
 import {from} from 'rxjs';
 import { AjaxResponse } from "rxjs/ajax";
-import { map, catchError, concatMap } from 'rxjs/operators';
-import { error } from 'console';
-import { types } from '@babel/core';
+import {catchError, map} from 'rxjs/operators';
 
-type fileType = {
-	_events: object,
-    _eventsCount: 0,
-    _maxListeners: undefined,
-    metadata: {
-      kind: string,
-	  id: string,
-	  selfLink: string,
-	  mediaLink:string,
-	  name: string,
-	  bucket: string,
-	  generation: string,
-	  metageneration: string,
-	  storageClass:string,
-	  size: number,
-	  md5Hash: string,
-	  crc32c: string,
-	  etag: string,
-	  timeCreated: string,
-	  updated: string,
-	  timeStorageClassUpdated: string  
-  }
-}
-function createSuccessAjaxResponse(file: fileType): AjaxResponse {
+function createSuccessAjaxResponse(response : any): AjaxResponse {
     return {
       originalEvent: {},
       xhr: {
-		name: file.metadata.name,
-		filepath: file.metadata.selfLink,
+		name: response.metadata.name,
+		filepath: response.metadata.selfLink,
 		type: "notebook",
-		writable : '',
-		created : file.metadata.timeCreated,
-		last_modified : file.metadata.updated,
+		writable : '', 
+		created : response.metadata.timeCreated,
+		last_modified : response.metadata.updated,
 		mimetype: "null",
 		content:  null,
 		format: "json"
 	},
       request: {},
       status: 200,
-      response: file.metadata,
-      responseText: JSON.stringify(file.metadata),
+      response: response.metadata,
+      responseText: JSON.stringify(response.metadata),
       responseType: "json"
     };
   }
@@ -70,20 +45,30 @@ Get metadata of the file from the bucket
 * @param fileName
 * @returns An Observable with the response
 */
+// export function get(storage: any, bucketName: string, fileName: string) : Observable < AjaxResponse > {
+// 	const bucket = storage.bucket(bucketName);
+// 	const file = bucket.file(fileName);	 
+// 	var response : Observable<AjaxResponse> 
+// 	return(file.get()).then(
+// 	(result: any) => {
+// 		var response = of(createSuccessAjaxResponse(result[0]))
+// 		console.log(isObservable(response))
+// 		console.log(response)
+// 	},
+// 	catchError(error => of(createErrorAjaxResponse(404, error)))
+// 	)
+// }
 export function get(storage: any, bucketName: string, fileName: string) : Observable < AjaxResponse > {
 	const bucket = storage.bucket(bucketName);
-	const file = bucket.file(fileName);	 
-	var response : Observable<AjaxResponse> 
-	return (file.get()).then(
-	(result: any) => {
-		var response = of(createSuccessAjaxResponse(result[0]))
-		console.log(isObservable(response))
-		return response
-	},
-	catchError(error => of(createErrorAjaxResponse(404, error)))
-	)
+	const file = bucket.file(fileName);
+	
+	   return from(file.get()).pipe(
+        map((result : any) => {
+            return createSuccessAjaxResponse(result[0]);
+		}),
+		catchError(error => of(createErrorAjaxResponse(404, error)))
+	);
 }
-
 /**
  * Updates a file.
  * @param storage
@@ -212,5 +197,5 @@ export class GoogleProvider {
 	public restoreFromCheckpoint() {
 		return restoreFromCheckpoint();
 	}
-	
 }
+
