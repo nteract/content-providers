@@ -9,9 +9,15 @@ $ npm install --save @nteract/google-content-provider
 ## <a name="create-bucket"></a> Create your Bucket on Google Cloud Storage
 The bucket should be created with **fine grained** access control, as the plugin will configure uploaded files with public read access.
 ### How to create a bucket ?
-- https://cloud.google.com/storage/docs/creating-buckets
+1. Open the Cloud Storage browser in the Google Cloud Console.
+2. Click Create bucket to open the bucket creation form.
+3. Enter information about your bucket, access control etc. 
+4. Click Done.
+For detailed instruction and demo check - https://cloud.google.com/storage/docs/creating-buckets
 
 ### Where my bucket can be located ?
+This page explains the concept of bucket location and the different locations where you can create buckets.
+
 - https://cloud.google.com/storage/docs/locations
 
 ## Setting up Google authentication
@@ -59,6 +65,17 @@ Define base path to get each media document.
 
 #### `publicFiles`:
 Boolean atribute to define public attribute to file when it is upload to storage.
+
+### Example of executing 'get' method to get a file from your google-buket : 
+
+<pre><code>
+import googleUtility from './googleUtility';
+
+const googleprovider= new GoogleProvider(googleUtility,bucketName,fileName,filePathLocal);
+const response = googleprovider.get(googleprovider.storage, bucketName, fileName);
+console.log("The apiresponse is here" +response);
+
+</code></pre>
 
 ## Documentation
 Please fine attached readme files
