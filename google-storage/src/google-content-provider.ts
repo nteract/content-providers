@@ -17,15 +17,31 @@ function createSuccessAjaxResponse(response : any): AjaxResponse {
 		last_modified : response.metadata.updated,
 		mimetype: "null",
 		content:  null,
-		format: "json"
+		format: "json",
+		headers: response.headers,
 	},
       request: {},
-      status: 200,
+	  status: 200,
       response: response.metadata,
       responseText: JSON.stringify(response.metadata),
       responseType: "json"
     };
   }
+  function createSuccessAjaxResponseForDeleteFile(responseDelete : any): AjaxResponse {
+    return {
+      originalEvent: {},
+      xhr: {
+		name: responseDelete.request.href,
+		headers: responseDelete.headers,
+	},
+      request: {},
+	  status: 204,
+      response: responseDelete.statusMessage,
+      responseText: JSON.stringify(responseDelete.metadata),
+      responseType: "json"
+    };
+  }
+  
   function createErrorAjaxResponse(status: number, error: any): AjaxResponse {
     return {
       originalEvent: {},
@@ -45,34 +61,24 @@ Get metadata of the file from the bucket
 * @param fileName
 * @returns An Observable with the response
 */
-// export function get(storage: any, bucketName: string, fileName: string) : Observable < AjaxResponse > {
-// 	const bucket = storage.bucket(bucketName);
-// 	const file = bucket.file(fileName);	 
-// 	var response : Observable<AjaxResponse> 
-// 	return(file.get()).then(
-// 	(result: any) => {
-// 		var response = of(createSuccessAjaxResponse(result[0]))
-// 		console.log(isObservable(response))
-// 		console.log(response)
-// 	},
-// 	catchError(error => of(createErrorAjaxResponse(404, error)))
-// 	)
-// }
 export function get(storage: any, bucketName: string, fileName: string) : Observable < AjaxResponse > {
 	const bucket = storage.bucket(bucketName);
 	const file = bucket.file(fileName);
 	
-	   return from(file.get()).pipe(
+	   var response= from(file.get()).pipe(
         map((result : any) => {
             return createSuccessAjaxResponse(result[0]);
 		}),
 		catchError(error => of(createErrorAjaxResponse(404, error)))
 	);
+	response.subscribe(response => console.log(response));
+	return response;
 }
 /**
  * Updates a file.
  * @param storage
  * @param bucketName
+ * @returns An Observable with the response
  */
 export function update(storage: any, bucketName: string, fileName: string): Observable < AjaxResponse > {
 	throw new Error("Not supported by Google API");
@@ -82,55 +88,64 @@ Uploads the file to the bucket
 * @param storage
 * @param bucketName
 * @param filePathLocal
+* @returns An Observable with the response
 */
 export function create(storage: any, bucketName: string, filePathLocal: string): Observable < AjaxResponse > {
 	// Uploads a local file to the bucket
-	var apiResponse: any;
-	storage.bucket(bucketName).upload(filePathLocal, {
+	const bucket = storage.bucket(bucketName);
+	var response= from(bucket.upload(filePathLocal, {
 		// Support for HTTP requests made with `Accept-Encoding: gzip`
 		gzip: true,
 		metadata: {
 			cacheControl: 'no-cache',
 		},
-	}).then(function (data: any) {
-		const file = data[0];
-		apiResponse = data[1];
-	});
+	})).pipe(
+        map((result : any) => {
+            return createSuccessAjaxResponse(result[0]);
+		}),
+		catchError(error => of(createErrorAjaxResponse(404, error)))
+	);
+	response.subscribe(response => console.log(response));
 	console.log(`${filePathLocal} uploaded to ${bucketName}.`);
-	return apiResponse;
-}
-/**
-	Deletes the file from the bucket
-	* @param storage
-	* @param bucketName
-	* @param fileName
-	*/
-export function save(storage: any, bucketName: string, fileName: string): Observable < AjaxResponse > {
-	const file = storage.bucket(bucketName).file(fileName);
-	const contents = 'This is the updated contents of the file.';
-	file.save(contents, function (err: any) {
-		if (!err) {
-			// File written successfully.
-		}
-	});
-	// If the callback is omitted, we'll return a Promise.
-	file.save(contents).then(function () {});
-	return file;
+	return response;
 }
 /**
 Deletes the file from the bucket
 * @param storage
 * @param bucketName
 * @param fileName
-* @returns {Promise<void>}
+* @returns An Observable with the response
+*/
+export function save(storage: any, bucketName: string, fileName: string): Observable < AjaxResponse > {
+	const file = storage.bucket(bucketName).file(fileName);
+	const contents = 'This is the updated contents of the file.';
+	var response= from(file.save(contents)).pipe(
+        map((result : any) => {
+            return createSuccessAjaxResponse(file);
+		}),
+		catchError(error => of(createErrorAjaxResponse(404, error)))
+	);
+	response.subscribe(response => console.log(response));
+	return response;
+}
+/**
+Deletes the file from the bucket
+* @param storage
+* @param bucketName
+* @param fileName
+* @returns An Observable with the request response
 */
 export function remove(storage: any, bucketName: string, fileName: string): Observable < AjaxResponse > {
-	var apiResponse: any;
-	storage.bucket(bucketName).file(fileName).delete().then(function (data: any) {
-		console.log(`gs://${bucketName}/${fileName} deleted.`);
-		apiResponse = data[0];
-	});
-	return apiResponse;
+	const file = storage.bucket(bucketName).file(fileName);
+	var response= from(file.delete()).pipe(
+        map((result : any) => {
+			console.log(`gs://${bucketName}/${fileName} deleted.`);
+			return createSuccessAjaxResponseForDeleteFile(result[0]);
+		}),
+		catchError(error => of(createErrorAjaxResponse(404, error)))
+	);
+	response.subscribe(response => console.log(response));
+	return response;
 }
 
 export function listCheckpoints() : Observable <AjaxResponse> {
