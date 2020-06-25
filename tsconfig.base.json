@@ -1,20 +1,17 @@
 {
   "compilerOptions": {
-    /* Basic Options */
-    "lib": [
-      "es2017"
-    ],
-    "module": "commonjs",                     /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
-    "target": "es2017",
     "strict": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
+    "declaration": true,
     "esModuleInterop": true,
-  },
-  "include": [
-    "google-storage/src/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+    "composite": true,
+    "lib": ["esnext", "dom"],
+    "target": "es2017",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    "noImplicitAny": true,
+    "resolveJsonModule": true,
+    "preserveWatchOutput": true,
+    "jsx": "react"
+  }
 }
