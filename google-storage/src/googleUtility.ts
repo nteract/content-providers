@@ -1,12 +1,14 @@
-// import service account details, bucketname, filename and other details from your configuration file
-import { serviceAccount, baseUrl, bucketName } from "../config";
 /**
  * Check validity of Service Account configuration
  * @param config
  * @returns {{private_key}|{client_email}|{project_id}|any}
  */
 
-const checkServiceAccount = () => {
+const checkServiceAccount = (
+  serviceAccount: any,
+  baseUrl: string,
+  bucketName: string
+) => {
   if (!serviceAccount) {
     throw new Error('"Service Account JSON" is required!');
   }
