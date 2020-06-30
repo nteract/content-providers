@@ -1,12 +1,35 @@
-import * as Storage from "@google-cloud/storage";
+import {Storage ,CreateBucketResponse,DeleteBucketResponse} from "@google-cloud/storage";
 import googleUtility from "./googleUtility";
 import { Observable, of } from "rxjs";
 import { from } from "rxjs";
 import { AjaxResponse } from "rxjs/ajax";
 import { catchError, map } from "rxjs/operators";
-import { filePathLocal, fileName, bucketName } from "../config";
+import {IContentProvider, ServerConfig, IGetParams} from "../src/types";
+import { serviceAccount,baseUrl, bucketName } from "../config";
+import { config } from "process";
+import { stringify } from "querystring";
 
-function createSuccessAjaxResponse(response: any): AjaxResponse {
+
+export interface googleServerconfig extends ServerConfig{
+  baseUrl: string,
+  apiEndpoint: string,
+  projectId: string,
+  credentials: {
+    client_email: string,
+    private_key: string,
+  }
+}
+
+// export function createGoogleServerconfig(serverConfig : ServerConfig, baseUrl : string){
+//   return{
+//     endpoint: serverConfig.apiEndpoint,
+//     url: baseUrl,
+//     token: serverConfig.projectId,
+//     xsrfToken: serverConfig.authClient.jsonContent
+//   }
+  
+// }
+function createSuccessAjaxResponse(response: CreateBucketResponse[1]): AjaxResponse {
   return {
     originalEvent: {},
     xhr: {
@@ -29,7 +52,7 @@ function createSuccessAjaxResponse(response: any): AjaxResponse {
   };
 }
 function createSuccessAjaxResponseForDeleteFile(
-  responseDelete: any
+  responseDelete: DeleteBucketResponse[0]
 ): AjaxResponse {
   return {
     originalEvent: {},
@@ -45,7 +68,7 @@ function createSuccessAjaxResponseForDeleteFile(
   };
 }
 
-function createErrorAjaxResponse(status: number, error: any): AjaxResponse {
+function createErrorAjaxResponse(status: number, error: Error): AjaxResponse {
   return {
     originalEvent: {},
     xhr: {},
@@ -57,33 +80,10 @@ function createErrorAjaxResponse(status: number, error: any): AjaxResponse {
   };
 }
 
-export class GoogleProvider {
-  storage: any;
-  bucketName: string;
-  fileName: string;
-  filePathLocal: string;
+export class GoogleProvider implements IContentProvider {
+  
+checkAccount = googleUtility.checkServiceAccount(serviceAccount,baseUrl,bucketName);
 
-  constructor(
-    utility: any,
-    bucketName: string,
-    fileName: string,
-    filePathLocal: string
-  ) {
-    // Check if service account exists
-    const serviceAccount = utility.checkServiceAccount();
-
-    var storage = new Storage.Storage({
-      projectId: serviceAccount.project_id,
-      credentials: {
-        client_email: serviceAccount.client_email,
-        private_key: serviceAccount.private_key,
-      },
-    });
-    this.storage = storage;
-    this.bucketName = bucketName;
-    this.fileName = fileName;
-    this.filePathLocal = filePathLocal;
-  }
   /**
   Get metadata of the file from the bucket
   * @param storage
@@ -92,44 +92,41 @@ export class GoogleProvider {
   * @returns An Observable with the response
   */
   public get(
-    storage: any,
-    bucketName: string,
-    fileName: string
-  ): Observable<AjaxResponse> {
-    const bucket = storage.bucket(bucketName);
+    serverConfig : googleServerconfig,
+    fileName: string,
+    params : Partial<IGetParams> = {},
+  ) : Observable<AjaxResponse> {
+ 
+    console.log(serverConfig);
+    const bucket = serverConfig.bucket(bucketName);
     const file = bucket.file(fileName);
-
     var response = from(file.get()).pipe(
-      map((result: any) => {
+      map((result) => {
         return createSuccessAjaxResponse(result[0]);
       }),
       catchError((error) => of(createErrorAjaxResponse(404, error)))
     );
+    response.subscribe((response) => console.log(response));
     return response;
   }
   /**
    * Updates a file.
-   * @param storage
-   * @param bucketName
+   * @param fileName
    * @returns An Observable with the response
    */
   public update(
-    storage: any,
-    bucketName: string,
     fileName: string
   ): Observable<AjaxResponse> {
     throw new Error("Not supported by Google API");
   }
   /**
   Uploads the file to the bucket
-  * @param storage
-  * @param bucketName
+  * @param googleServerconfig
   * @param filePathLocal
   * @returns An Observable with the response
   */
   public create(
-    storage: any,
-    bucketName: string,
+    storage : Storage,
     filePathLocal: string
   ): Observable<AjaxResponse> {
     // Uploads a local file to the bucket
@@ -143,7 +140,7 @@ export class GoogleProvider {
         },
       })
     ).pipe(
-      map((result: any) => {
+      map((result) => {
         return createSuccessAjaxResponse(result[0]);
       }),
       catchError((error) => of(createErrorAjaxResponse(404, error)))
@@ -160,15 +157,13 @@ export class GoogleProvider {
   * @returns An Observable with the response
   */
   public save(
-    storage: any,
-    bucketName: string,
+  storage : Storage,
 	fileName: string,
-	newContent: string
   ): Observable<AjaxResponse> {
     const file = storage.bucket(bucketName).file(fileName);
-    const contents = newContent;
+    const contents = "newContent";
     var response = from(file.save(contents)).pipe(
-      map((result: any) => {
+      map((result) => {
         return createSuccessAjaxResponse(file);
       }),
       catchError((error) => of(createErrorAjaxResponse(404, error)))
@@ -183,13 +178,12 @@ export class GoogleProvider {
   * @returns An Observable with the request response
   */
   public remove(
-    storage: any,
-    bucketName: string,
+    storage: Storage,
     fileName: string
   ): Observable<AjaxResponse> {
     const file = storage.bucket(bucketName).file(fileName);
     var response = from(file.delete()).pipe(
-      map((result: any) => {
+      map((result) => {
         return createSuccessAjaxResponseForDeleteFile(result[0]);
       }),
       catchError((error) => of(createErrorAjaxResponse(404, error)))
@@ -210,15 +204,3 @@ export class GoogleProvider {
     throw new Error("Not implemented");
   }
 }
-
-const googleprovider = new GoogleProvider(
-  googleUtility,
-  bucketName,
-  fileName,
-  filePathLocal
-);
-googleprovider.get(
-  googleprovider.storage,
-  "notebook_samples",
-  "Cell Magics.ipynb"
-);
