@@ -1,35 +1,33 @@
-import {Storage ,CreateBucketResponse,DeleteBucketResponse} from "@google-cloud/storage";
+import {
+  Storage,
+  CreateBucketResponse,
+  DeleteBucketResponse,
+} from "@google-cloud/storage";
 import googleUtility from "./googleUtility";
 import { Observable, of } from "rxjs";
 import { from } from "rxjs";
 import { AjaxResponse } from "rxjs/ajax";
 import { catchError, map } from "rxjs/operators";
-import {IContentProvider, ServerConfig, IGetParams} from "../src/types";
-import { serviceAccount,baseUrl, bucketName } from "../config";
+import { IContentProvider, ServerConfig, IGetParams } from "../src/types";
+import { serviceAccount, baseUrl, bucketName } from "../config";
 import { config } from "process";
 import { stringify } from "querystring";
 
-
-export interface googleServerconfig extends ServerConfig{
-  baseUrl: string,
-  apiEndpoint: string,
-  projectId: string,
-  credentials: {
-    client_email: string,
-    private_key: string,
-  }
+type GoogleAuth = {
+  checkIsGCE: undefined;
+  jsonContent: {
+    client_email: string;
+    private_key: string;
+  };
+};
+export interface IGooogleServerConfig extends ServerConfig {
+  projectId: string;
+  authClient: GoogleAuth;
 }
 
-// export function createGoogleServerconfig(serverConfig : ServerConfig, baseUrl : string){
-//   return{
-//     endpoint: serverConfig.apiEndpoint,
-//     url: baseUrl,
-//     token: serverConfig.projectId,
-//     xsrfToken: serverConfig.authClient.jsonContent
-//   }
-  
-// }
-function createSuccessAjaxResponse(response: CreateBucketResponse[1]): AjaxResponse {
+function createSuccessAjaxResponse(
+  response: CreateBucketResponse[1]
+): AjaxResponse {
   return {
     originalEvent: {},
     xhr: {
@@ -81,24 +79,33 @@ function createErrorAjaxResponse(status: number, error: Error): AjaxResponse {
 }
 
 export class GoogleProvider implements IContentProvider {
-  
-checkAccount = googleUtility.checkServiceAccount(serviceAccount,baseUrl,bucketName);
+  checkAccount = googleUtility.checkServiceAccount(
+    serviceAccount,
+    baseUrl,
+    bucketName
+  );
 
   /**
   Get metadata of the file from the bucket
-  * @param storage
+  * @param serverConfig
   * @param bucketName
   * @param fileName
   * @returns An Observable with the response
   */
   public get(
-    serverConfig : googleServerconfig,
+    serverConfig: IGooogleServerConfig,
     fileName: string,
-    params : Partial<IGetParams> = {},
-  ) : Observable<AjaxResponse> {
- 
+    params: Partial<IGetParams> = {}
+  ): Observable<AjaxResponse> {
     console.log(serverConfig);
-    const bucket = serverConfig.bucket(bucketName);
+    var storage = new Storage({
+      projectId: serverConfig.projectId,
+      credentials: {
+        client_email: serverConfig.authClient.jsonContent.client_email,
+        private_key: serverConfig.authClient.jsonContent.private_key,
+      },
+    });
+    const bucket = storage.bucket(bucketName);
     const file = bucket.file(fileName);
     var response = from(file.get()).pipe(
       map((result) => {
@@ -115,6 +122,7 @@ checkAccount = googleUtility.checkServiceAccount(serviceAccount,baseUrl,bucketNa
    * @returns An Observable with the response
    */
   public update(
+    serverConfig: IGooogleServerConfig,
     fileName: string
   ): Observable<AjaxResponse> {
     throw new Error("Not supported by Google API");
@@ -126,9 +134,16 @@ checkAccount = googleUtility.checkServiceAccount(serviceAccount,baseUrl,bucketNa
   * @returns An Observable with the response
   */
   public create(
-    storage : Storage,
+    serverConfig: IGooogleServerConfig,
     filePathLocal: string
   ): Observable<AjaxResponse> {
+    var storage = new Storage({
+      projectId: serverConfig.projectId,
+      credentials: {
+        client_email: serverConfig.authClient.jsonContent.client_email,
+        private_key: serverConfig.authClient.jsonContent.private_key,
+      },
+    });
     // Uploads a local file to the bucket
     const bucket = storage.bucket(bucketName);
     var response = from(
@@ -150,16 +165,23 @@ checkAccount = googleUtility.checkServiceAccount(serviceAccount,baseUrl,bucketNa
   }
   /**
   Deletes the file from the bucket
-  * @param storage
+  * @param serverConfig
   * @param bucketName
   * @param fileName
   * @param newContent
   * @returns An Observable with the response
   */
   public save(
-  storage : Storage,
-	fileName: string,
+    serverConfig: IGooogleServerConfig,
+    fileName: string
   ): Observable<AjaxResponse> {
+    var storage = new Storage({
+      projectId: serverConfig.projectId,
+      credentials: {
+        client_email: serverConfig.authClient.jsonContent.client_email,
+        private_key: serverConfig.authClient.jsonContent.private_key,
+      },
+    });
     const file = storage.bucket(bucketName).file(fileName);
     const contents = "newContent";
     var response = from(file.save(contents)).pipe(
@@ -172,15 +194,22 @@ checkAccount = googleUtility.checkServiceAccount(serviceAccount,baseUrl,bucketNa
   }
   /**
   Deletes the file from the bucket
-  * @param storage
+  * @param serverConfig
   * @param bucketName
   * @param fileName
   * @returns An Observable with the request response
   */
   public remove(
-    storage: Storage,
+    serverConfig: IGooogleServerConfig,
     fileName: string
   ): Observable<AjaxResponse> {
+    var storage = new Storage({
+      projectId: serverConfig.projectId,
+      credentials: {
+        client_email: serverConfig.authClient.jsonContent.client_email,
+        private_key: serverConfig.authClient.jsonContent.private_key,
+      },
+    });
     const file = storage.bucket(bucketName).file(fileName);
     var response = from(file.delete()).pipe(
       map((result) => {

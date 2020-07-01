@@ -3,9 +3,14 @@
  * @param config
  * @returns {{private_key}|{client_email}|{project_id}|any}
  */
+type ServiceAccountType = {
+  project_id: string;
+  client_email: string;
+  private_key: string;
+};
 
 const checkServiceAccount = (
-  serviceAccount: any,
+  serviceAccount: ServiceAccountType,
   baseUrl: string,
   bucketName: string
 ) => {
@@ -22,38 +27,38 @@ const checkServiceAccount = (
     );
   }
 
-  let serviceAccountjson;
-
-  try {
-    serviceAccountjson =
-      typeof serviceAccount === "string"
-        ? JSON.parse(serviceAccount)
-        : serviceAccountjson;
-  } catch (e) {
-    throw new Error(
-      'Error parsing data "Service Account JSON", please be sure to copy/paste the full JSON file.'
-    );
+  let serviceAccountJSON: ServiceAccountType;
+  if (typeof serviceAccount === "string")
+    try {
+      serviceAccountJSON = JSON.parse(serviceAccount);
+    } catch (e) {
+      throw new Error(
+        'Error parsing data "Service Account JSON", please be sure to copy/paste the full JSON file.'
+      );
+    }
+  else {
+    serviceAccountJSON = serviceAccount;
   }
   /**
    * Check exist
    */
-  if (!serviceAccount.project_id) {
+  if (!serviceAccountJSON.project_id) {
     throw new Error(
       'Error parsing data "Service Account JSON". Missing "project_id" field in JSON file.'
     );
   }
-  if (!serviceAccount.client_email) {
+  if (!serviceAccountJSON.client_email) {
     throw new Error(
       'Error parsing data "Service Account JSON". Missing "client_email" field in JSON file.'
     );
   }
-  if (!serviceAccount.private_key) {
+  if (!serviceAccountJSON.private_key) {
     throw new Error(
       'Error parsing data "Service Account JSON". Missing "private_key" field in JSON file.'
     );
   }
 
-  return serviceAccount;
+  return serviceAccountJSON;
 };
 
 export default {
