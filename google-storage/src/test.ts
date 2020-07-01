@@ -1,16 +1,7 @@
 import {
   GoogleProvider,
-  IGooogleServerConfig,
 } from "../src/google-content-provider";
-import googleUtility from "../src/googleUtility";
-import { serviceAccount, baseUrl, bucketName, endPoint } from "../config";
-import { Storage } from "@google-cloud/storage";
-
-const checkAccount = googleUtility.checkServiceAccount(
-  serviceAccount,
-  baseUrl,
-  bucketName
-);
+import { serviceAccount, endPoint } from "../config";
 
 const serverConfig = {
   endpoint: endPoint,
