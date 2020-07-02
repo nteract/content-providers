@@ -1,7 +1,5 @@
-import {
-  GoogleProvider,
-} from "../src/google-content-provider";
-import { serviceAccount, endPoint } from "../config";
+import { GoogleProvider } from "../src/google-content-provider";
+import { serviceAccount, endPoint, baseUrl, bucketName } from "../config";
 
 const serverConfig = {
   endpoint: endPoint,
@@ -15,5 +13,5 @@ const serverConfig = {
   },
 };
 console.log(serverConfig);
-const googleprovider = new GoogleProvider();
+const googleprovider = new GoogleProvider(serviceAccount, baseUrl, bucketName);
 googleprovider.get(serverConfig, "Cell Magics.ipynb");

@@ -15,7 +15,6 @@ import {
   IContent,
   FileType,
 } from "../src/types";
-import { serviceAccount, baseUrl, bucketName } from "../config";
 
 type ServiceAccountType = {
   project_id: string;
@@ -129,7 +128,7 @@ export class GoogleProvider implements IContentProvider {
   ): Observable<AjaxResponse> {
     console.log(this.storage);
 
-    const bucket = this.storage.bucket(bucketName);
+    const bucket = this.storage.bucket(this.bucketName);
     const file = bucket.file(fileName);
     var response = from(file.get()).pipe(
       map((result) => {
@@ -162,7 +161,7 @@ export class GoogleProvider implements IContentProvider {
     filePathLocal: string
   ): Observable<AjaxResponse> {
     // Uploads a local file to the bucket
-    const bucket = this.storage.bucket(bucketName);
+    const bucket = this.storage.bucket(this.bucketName);
     var response = from(
       bucket.upload(filePathLocal, {
         // Support for HTTP requests made with `Accept-Encoding: gzip`
@@ -177,7 +176,7 @@ export class GoogleProvider implements IContentProvider {
       }),
       catchError((error) => of(createErrorAjaxResponse(404, error)))
     );
-    console.log(`${filePathLocal} uploaded to ${bucketName}.`);
+    console.log(`${filePathLocal} uploaded to ${this.bucketName}.`);
     return response;
   }
   /**
@@ -193,7 +192,7 @@ export class GoogleProvider implements IContentProvider {
     fileName: string,
     model: Partial<IContent<FT>>
   ): Observable<AjaxResponse> {
-    const file = this.storage.bucket(bucketName).file(fileName);
+    const file = this.storage.bucket(this.bucketName).file(fileName);
     const contents = "newContent";
     var response = from(file.save(contents)).pipe(
       map((result) => {
@@ -214,7 +213,7 @@ export class GoogleProvider implements IContentProvider {
     serverConfig: IGooogleServerConfig,
     fileName: string
   ): Observable<AjaxResponse> {
-    const file = this.storage.bucket(bucketName).file(fileName);
+    const file = this.storage.bucket(this.bucketName).file(fileName);
     var response = from(file.delete()).pipe(
       map((result) => {
         return createSuccessAjaxResponseForDeleteFile(result[0]);
