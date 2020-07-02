@@ -92,24 +92,24 @@ export class GoogleProvider implements IContentProvider {
   baseUrl: string;
   bucketName: string;
   storage: Storage;
-  serviceAccountDetail: ServiceAccountType;
+  serviceAccountJSON: ServiceAccountType;
 
   constructor(serviceAccount: any, baseUrl: string, bucketName: string) {
     this.serviceAccount = serviceAccount;
     this.baseUrl = baseUrl;
     this.bucketName = bucketName;
 
-    this.serviceAccountDetail = googleUtility.checkServiceAccount(
+    this.serviceAccountJSON = googleUtility.checkServiceAccount(
       serviceAccount,
       baseUrl,
       bucketName
     );
 
     this.storage = new Storage({
-      projectId: this.serviceAccountDetail.project_id,
+      projectId: this.serviceAccountJSON.project_id,
       credentials: {
-        client_email: this.serviceAccountDetail.client_email,
-        private_key: this.serviceAccountDetail.private_key,
+        client_email: this.serviceAccountJSON.client_email,
+        private_key: this.serviceAccountJSON.private_key,
       },
     });
   }
@@ -126,8 +126,6 @@ export class GoogleProvider implements IContentProvider {
     fileName: string,
     params: Partial<IGetParams> = {}
   ): Observable<AjaxResponse> {
-    console.log(this.storage);
-
     const bucket = this.storage.bucket(this.bucketName);
     const file = bucket.file(fileName);
     var response = from(file.get()).pipe(
