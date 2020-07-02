@@ -8,10 +8,20 @@ import { Observable, of } from "rxjs";
 import { from } from "rxjs";
 import { AjaxResponse } from "rxjs/ajax";
 import { catchError, map } from "rxjs/operators";
-import { IContentProvider, ServerConfig, IGetParams } from "../src/types";
+import {
+  IContentProvider,
+  ServerConfig,
+  IGetParams,
+  IContent,
+  FileType,
+} from "../src/types";
 import { serviceAccount, baseUrl, bucketName } from "../config";
-import { config } from "process";
-import { stringify } from "querystring";
+
+type ServiceAccountType = {
+  project_id: string;
+  client_email: string;
+  private_key: string;
+};
 
 type GoogleAuth = {
   checkIsGCE: undefined;
@@ -79,11 +89,31 @@ function createErrorAjaxResponse(status: number, error: Error): AjaxResponse {
 }
 
 export class GoogleProvider implements IContentProvider {
-  checkAccount = googleUtility.checkServiceAccount(
-    serviceAccount,
-    baseUrl,
-    bucketName
-  );
+  serviceAccount: ServiceAccountType;
+  baseUrl: string;
+  bucketName: string;
+  storage: Storage;
+  serviceAccountDetail: ServiceAccountType;
+
+  constructor(serviceAccount: any, baseUrl: string, bucketName: string) {
+    this.serviceAccount = serviceAccount;
+    this.baseUrl = baseUrl;
+    this.bucketName = bucketName;
+
+    this.serviceAccountDetail = googleUtility.checkServiceAccount(
+      serviceAccount,
+      baseUrl,
+      bucketName
+    );
+
+    this.storage = new Storage({
+      projectId: this.serviceAccountDetail.project_id,
+      credentials: {
+        client_email: this.serviceAccountDetail.client_email,
+        private_key: this.serviceAccountDetail.private_key,
+      },
+    });
+  }
 
   /**
   Get metadata of the file from the bucket
@@ -97,15 +127,9 @@ export class GoogleProvider implements IContentProvider {
     fileName: string,
     params: Partial<IGetParams> = {}
   ): Observable<AjaxResponse> {
-    console.log(serverConfig);
-    var storage = new Storage({
-      projectId: serverConfig.projectId,
-      credentials: {
-        client_email: serverConfig.authClient.jsonContent.client_email,
-        private_key: serverConfig.authClient.jsonContent.private_key,
-      },
-    });
-    const bucket = storage.bucket(bucketName);
+    console.log(this.storage);
+
+    const bucket = this.storage.bucket(bucketName);
     const file = bucket.file(fileName);
     var response = from(file.get()).pipe(
       map((result) => {
@@ -137,15 +161,8 @@ export class GoogleProvider implements IContentProvider {
     serverConfig: IGooogleServerConfig,
     filePathLocal: string
   ): Observable<AjaxResponse> {
-    var storage = new Storage({
-      projectId: serverConfig.projectId,
-      credentials: {
-        client_email: serverConfig.authClient.jsonContent.client_email,
-        private_key: serverConfig.authClient.jsonContent.private_key,
-      },
-    });
     // Uploads a local file to the bucket
-    const bucket = storage.bucket(bucketName);
+    const bucket = this.storage.bucket(bucketName);
     var response = from(
       bucket.upload(filePathLocal, {
         // Support for HTTP requests made with `Accept-Encoding: gzip`
@@ -171,18 +188,12 @@ export class GoogleProvider implements IContentProvider {
   * @param newContent
   * @returns An Observable with the response
   */
-  public save(
+  public save<FT extends FileType>(
     serverConfig: IGooogleServerConfig,
-    fileName: string
+    fileName: string,
+    model: Partial<IContent<FT>>
   ): Observable<AjaxResponse> {
-    var storage = new Storage({
-      projectId: serverConfig.projectId,
-      credentials: {
-        client_email: serverConfig.authClient.jsonContent.client_email,
-        private_key: serverConfig.authClient.jsonContent.private_key,
-      },
-    });
-    const file = storage.bucket(bucketName).file(fileName);
+    const file = this.storage.bucket(bucketName).file(fileName);
     const contents = "newContent";
     var response = from(file.save(contents)).pipe(
       map((result) => {
@@ -203,14 +214,7 @@ export class GoogleProvider implements IContentProvider {
     serverConfig: IGooogleServerConfig,
     fileName: string
   ): Observable<AjaxResponse> {
-    var storage = new Storage({
-      projectId: serverConfig.projectId,
-      credentials: {
-        client_email: serverConfig.authClient.jsonContent.client_email,
-        private_key: serverConfig.authClient.jsonContent.private_key,
-      },
-    });
-    const file = storage.bucket(bucketName).file(fileName);
+    const file = this.storage.bucket(bucketName).file(fileName);
     var response = from(file.delete()).pipe(
       map((result) => {
         return createSuccessAjaxResponseForDeleteFile(result[0]);
